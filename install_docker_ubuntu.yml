@@ -1,0 +1,63 @@
+---
+- name: Install Docker on Ubuntu remote machine
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt repository cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required dependencies for Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Get Ubuntu version codename
+      command: lsb_release -cs
+      register: ubuntu_codename
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository to APT sources
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable"
+        state: present
+
+    - name: Install Docker CE (Community Edition)
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Show Docker version
+      debug:
+        msg: "Docker version: {{ docker_version.stdout }}"
+
+    - name: Ensure the user exists
+      user:
+        name: "alice"
+        state: present
+
+    - name: Add user to group
+      user:
+        name: "alice"
+        groups: "docker"
+        append: yes

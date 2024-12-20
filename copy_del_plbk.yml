@@ -1,0 +1,16 @@
+---
+- hosts: prod
+  become: yes
+
+  tasks:
+  - name: Copy file with owner and permissions
+    copy:
+      src: /tmp/test.txt
+      dest: /tmp/test.txt
+      owner: root
+      group: root
+      mode: '0644'
+  - name: Remove file (delete file)
+    ansible.builtin.file:
+      path: /tmp/test.txt
+      state: absent
